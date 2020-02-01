@@ -1,6 +1,11 @@
-import csv, random, json, sys, os
+import csv, random, json, sys, os, subprocess
 import tkinter as tk
 from tkinter import filedialog, Text
+import matplotlib.pyplot as plt
+import matplotlib.backends.backend_pdf
+from pathlib import Path
+from copy import deepcopy
+from tkinter.font import Font
 
 """
 Data types:
@@ -21,6 +26,129 @@ their vote count for that round
 
 
 """
+
+def lighten_color(color, amount=0.5):
+    """
+    Lightens the given color by multiplying (1-luminosity) by the given amount.
+    Input can be matplotlib color string, hex string, or RGB tuple.
+
+    Examples:
+    >> lighten_color('g', 0.3)
+    >> lighten_color('#F034A3', 0.6)
+    >> lighten_color((.3,.55,.1), 0.5)
+    """
+    import matplotlib.colors as mc
+    import colorsys
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
+
+def get_random_color(pastel_factor = 0.5):
+    return [(x+pastel_factor)/(1.0+pastel_factor) for x in [random.uniform(0,1.0) for i in [1,2,3]]]
+
+def color_distance(c1,c2):
+    return sum([abs(x[0]-x[1]) for x in zip(c1,c2)])
+
+def generate_new_color(existing_colors,pastel_factor = 0.5):
+    max_distance = None
+    best_color = None
+    for i in range(0,100):
+        color = get_random_color(pastel_factor = pastel_factor)
+        if not existing_colors:
+            return color
+        best_distance = min([color_distance(color,c) for c in existing_colors])
+        if not max_distance or best_distance > max_distance:
+            max_distance = best_distance
+            best_color = color
+    return best_color
+
+def getColorList(n):
+    colors = []
+
+    for i in range(0,n):
+        colors.append(generate_new_color(colors,pastel_factor = 0.1))
+        
+    return colors
+
+def assignColors(candidates):
+    colors = {}
+    # Get one color for every candidate
+    randomColors = getColorList(len(candidates))
+    # Assign each candidate a color
+    for i in range(0, len(candidates)):
+        candidate = candidates[i]
+        color = randomColors[i]
+        colors[candidate] = color
+    
+    return colors
+
+def graphRound(rounds, roundNumber, scores, votingSystem, colors):
+    """
+    colors: a dictionary mapping candidates to colors
+    """
+
+    round = rounds[roundNumber]
+
+    # Hacky thing to clear old figure
+    plt.figure(roundNumber)
+    plt.clf()
+    plt.close(plt.gcf())
+    plt.figure(roundNumber)
+
+    plt.title("Round " + str(roundNumber + 1))
+
+    if (votingSystem == "Borda Count"):
+        xlabel = "Borda Score"
+    else:
+        xlabel = "Number of votes"
+    
+    sortedCandidates = sorted(round.keys(), key=lambda x: (round[x], scores[x]))
+    sortedTotalCounts = [round[candidate] for candidate in sortedCandidates]
+
+    colorList = [colors[c] for c in sortedCandidates]
+
+    if roundNumber != 0:
+        # If it's not the first round, print new votes to the right of old votes
+        previousRound = rounds[roundNumber - 1]
+        sortedPreviousCounts = [previousRound[candidate] for candidate in sortedCandidates]
+        sortedNewCounts = [t - p for t, p in zip(sortedTotalCounts, sortedPreviousCounts)]
+
+        plt.barh(range(len(round)),sortedPreviousCounts, tick_label=sortedCandidates, edgecolor = "black", color=colorList)
+        plt.barh(range(len(round)),sortedNewCounts, tick_label=sortedCandidates, left=sortedPreviousCounts, edgecolor = "black", color=[lighten_color(c) for c in colorList])
+         
+    else:
+        plt.barh(range(len(round)),sortedTotalCounts,tick_label=sortedCandidates, edgecolor = "black", color=colorList)
+        
+    plt.xlabel(xlabel)
+
+    # Display threshold line
+    if (votingSystem != "Borda Count"):
+        totalVotes = sum(round.values())
+        votesNeeded = (totalVotes // 2) + 1
+        plt.axvline(x=votesNeeded)
+    
+    plt.tight_layout()
+    
+def roundsToPdf(rounds, pdfFilename, scores, votingSystem, colors=None):
+
+    candidates = list(rounds[0].keys())
+
+    # Randomly select colors
+    if colors == None:
+        colors = assignColors(candidates)
+
+    for roundNumber in range(0, len(rounds)):
+        graphRound(rounds, roundNumber, scores, votingSystem, colors)
+
+    pdf = matplotlib.backends.backend_pdf.PdfPages(pdfFilename)
+    for fig in range(0, len(rounds)): ## will open an empty extra figure :(
+        pdf.savefig( fig )
+    pdf.close()
+
+    subprocess.run(['start', pdfFilename], check=True, shell=True)
 
 def writeJson(object, filename, indent=None, sort_keys=False):
     """Writes a python object to a json file
@@ -254,7 +382,7 @@ def irv(ballots):
     ballots (list): A list of ballots. 
                     
     Returns:
-    list: A list of irv rounds.
+    (rounds, scores): A tuple containing the rounds and scores
     """
 
     candidates = getCandidates(ballots)
@@ -290,16 +418,24 @@ def irv(ballots):
         currentRound = getRound(candidates, ballots)
         rounds.append(currentRound)
 
-    return rounds
+    return (rounds, scores)
 
 def bordaCount(ballots):
+    """
+    Returns
+    (rounds, scores): A tuple containing the rounds and scores
+    For this function, returning the scores is redundant, but keeps things consistent
+    """
     candidates = getCandidates(ballots)
-    return [calculateBordaScores(candidates, ballots)]
+    scores = calculateBordaScores(candidates, ballots)
+    return ([scores], scores)
 
 def twoRound(ballots):
     """
     Simulate a two-round election using ranked ballots
 
+    Returns
+    (rounds, scores): A tuple containing the rounds and scores
     """
     candidates = getCandidates(ballots)
     scores = calculateBordaScores(candidates, ballots)
@@ -335,27 +471,31 @@ def twoRound(ballots):
     secondRound = getRound(candidates, ballots)
     rounds.append(secondRound)
 
-    return rounds
+    return (rounds, scores)
 
-def csvToJson(filename, votingSystem):
+def ballotsToPdf(ballots, votingSystem, pdfOutput, colors=None):
+    rounds, scores = voteSwitch[votingSystem](ballots)
+    roundsToPdf(rounds, pdfOutput, scores, votingSystem, colors=colors)
 
-    # Allow the user to specify 'all'
-    if (votingSystem == "all"):
-        for vs in voteSwitch:
-            csvToJson(filename, vs)
-        return
-
-    csvFile = filename
-    jsonOutput = csvFile.split(".")[0] + "_"  + votingSystem + ".json"
-    ballots = readBallots(csvFile)
-    rounds = voteSwitch[votingSystem](ballots)
-    writeJson(rounds, jsonOutput, indent=4, sort_keys=True)
+def getPdfOutputName(csvFile, votingSystem):
+    # Remove all spaces from filename so that the os can open it
+    return (csvFile.split(".")[0] + "_"  + votingSystem + ".pdf").replace(" ", "_")
 
 def promptFilename(votingSystem):
-    filename =  filedialog.askopenfilename(initialdir="/", title="Select File",
-                                           filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
+    csvFile = filedialog.askopenfilename(initialdir=str(Path.home()), title="Select File",
+                                         filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
 
-    csvToJson(filename, votingSystem)
+    ballots = readBallots(csvFile)
+    
+    candidates = getCandidates(ballots)
+    colors = assignColors(candidates)
+
+    # Allow the user to specify 'all'
+    if (votingSystem == "All"):
+        for vs in voteSwitch:
+            ballotsToPdf(deepcopy(ballots), vs, getPdfOutputName(csvFile, vs), colors=colors)
+    else:
+        ballotsToPdf(ballots, votingSystem, getPdfOutputName(csvFile, votingSystem), colors=colors)
 
 voteSwitch = {
     "Instant-Runoff": irv,
@@ -370,31 +510,40 @@ def main():
     root.config(height=500, width=500)
     root.title("KnowVote")
 
+    bold_font = Font(family="Helvetica", size=12, weight="bold")
+
+    image = tk.PhotoImage(file=os.path.join('images', "KnowVoteLogoSmallT.png"))
+    imageLabel = tk.Label(image=image)
+    imageLabel.pack(padx=50, pady=10)
+
     fileSelectPane = tk.Frame(root)
-    fileSelectPane.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    fileSelectPane.pack(anchor=tk.CENTER, padx = 20, pady = 10)
 
     # Label
-    dropdownLabel = tk.Label(fileSelectPane, text="Select voting system: ")
-    dropdownLabel.grid(row=0, column=0)
+    dropdownLabel = tk.Label(fileSelectPane, text="Select voting system: ", font=bold_font)
+    dropdownLabel.grid(row=0, column=0, pady=10)
 
     # Dropdown
-    votingOptions = list(voteSwitch.keys()) + ["all"]
+    votingOptions = list(voteSwitch.keys()) + ["All"]
 
     votingSystemSelection = tk.StringVar(root)
     votingSystemSelection.set(votingOptions[0])
 
-    votingSystemDropdown = tk.OptionMenu(fileSelectPane, votingSystemSelection, *votingOptions)
-    votingSystemDropdown.grid(row=0, column=1)
+    votingSystemDropdown = tk.OptionMenu(fileSelectPane, votingSystemSelection, *votingOptions) 
+    votingSystemDropdown.config(fg="white", activeforeground="white", bg="#D4030B", activebackground="#ED1C24", height=2, font=bold_font)
+    votingSystemDropdown.grid(row=0, column=1, padx=10, pady=10)
 
     # Open file button
-    openFile = tk.Button(fileSelectPane, text="Open File", padx=10, pady=5, 
-                         fg="white", bg="#263D42", command=lambda: promptFilename(votingSystemSelection.get()))
-    openFile.grid(row=0, column=2)
+    openFile = tk.Button(fileSelectPane, text="Open CSV Ballot File", padx=10, height=2, font=bold_font,
+                         fg="white", bg="#2E3192", command=lambda: promptFilename(votingSystemSelection.get()))
+    openFile.grid(row=0, column=2, padx=10, pady=10)
 
     root.mainloop()
 
+
 if (__name__ == "__main__"):
     main()
+    input('Press Enter to Continue...')
 
     # round = {
     #     "Trump": 60,
