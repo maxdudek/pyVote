@@ -1,0 +1,21 @@
+CD,Cookie Dough,Chocolate Peanut Butter,Vanilla,Strawberry,Chocolate,Mint Chocolate Chip,Pistachio,Rum Raisin,Moose Tracks
+CD,Cookie Dough,Cookies and Cream,Chocolate Peanut Butter,Pistachio,Mint Chocolate Chip,Chocolate,Rum Raisin,Vanilla,Strawberry
+,,,,,,,,,
+C,Chocolate,Moose Tracks,Chocolate Peanut Butter,Cookies and Cream,Cookie Dough,Mint Chocolate Chip,Vanilla,Strawberry,
+C,Mint Chocolate Chip,Cookies and Cream,Chocolate Peanut Butter,Moose Tracks,Chocolate,Vanilla,Strawberry,Cookie Dough,Rum Raisin
+CD,Cookie Dough,Mint Chocolate Chip,Vanilla,,,,,,
+CD,Cookie Dough,Mint Chocolate Chip,Pistachio,Vanilla,Chocolate Peanut Butter,Strawberry,Chocolate,Rum Raisin,
+,,,,,,,,,
+CD,Cookie Dough,Cookies and Cream,Moose Tracks,Mint Chocolate Chip,Vanilla,Chocolate,Pistachio,Strawberry,Rum Raisin
+CD,Pistachio,Chocolate Peanut Butter,Cookie Dough,Vanilla,Chocolate,Cookies and Cream,,,
+,,,,,,,,,
+,,,,,,,,,
+C,Chocolate,Cookie Dough,,,,,,,
+C,Vanilla,Chocolate,Cookie Dough,Mint Chocolate Chip,Strawberry,Pistachio,Chocolate Peanut Butter,Rum Raisin,Moose Tracks
+C,Mint Chocolate Chip,Strawberry,Chocolate,Cookies and Cream,,,,,
+CD,Moose Tracks,Cookies and Cream,Cookie Dough,Vanilla,Chocolate,Chocolate Peanut Butter,Strawberry,Pistachio,Rum Raisin
+C,Vanilla,Chocolate,Cookie Dough,Chocolate Peanut Butter,,,,,
+,Mint Chocolate Chip,,,,,,,,
+C,Chocolate,Mint Chocolate Chip,Chocolate Peanut Butter,Cookie Dough,Strawberry,Vanilla,Pistachio,,
+,Pistachio,Vanilla,Strawberry,,,,,,
+CD,Cookie Dough,Cookies and Cream,Chocolate Peanut Butter,Mint Chocolate Chip,Pistachio,Moose Tracks,Strawberry,Vanilla,Chocolate

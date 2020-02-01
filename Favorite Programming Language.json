@@ -1,0 +1,37 @@
+[
+    {
+        "Assembly": 1,
+        "C++": 1,
+        "HTML": 3,
+        "Java": 10,
+        "JavaScript": 2,
+        "Python 2.7": 1,
+        "Python 3": 9
+    },
+    {
+        "Assembly": 1,
+        "HTML": 3,
+        "Java": 11,
+        "JavaScript": 2,
+        "Python 2.7": 1,
+        "Python 3": 9
+    },
+    {
+        "HTML": 3,
+        "Java": 12,
+        "JavaScript": 2,
+        "Python 2.7": 1,
+        "Python 3": 9
+    },
+    {
+        "HTML": 3,
+        "Java": 13,
+        "JavaScript": 2,
+        "Python 3": 9
+    },
+    {
+        "HTML": 3,
+        "Java": 14,
+        "Python 3": 10
+    }
+]

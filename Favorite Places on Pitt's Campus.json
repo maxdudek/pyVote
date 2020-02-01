@@ -1,0 +1,32 @@
+[
+    {
+        "Cathy": 8,
+        "Frick Fine Arts": 5,
+        "Hillman": 8,
+        "Information Science Building": 1,
+        "Sennott Square": 2,
+        "WPU": 2
+    },
+    {
+        "Cathy": 8,
+        "Frick Fine Arts": 5,
+        "Hillman": 9,
+        "Sennott Square": 2,
+        "WPU": 2
+    },
+    {
+        "Cathy": 9,
+        "Frick Fine Arts": 5,
+        "Hillman": 9,
+        "Sennott Square": 2
+    },
+    {
+        "Cathy": 10,
+        "Frick Fine Arts": 5,
+        "Hillman": 10
+    },
+    {
+        "Cathy": 15,
+        "Hillman": 10
+    }
+]
