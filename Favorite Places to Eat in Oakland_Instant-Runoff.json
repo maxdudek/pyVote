@@ -12,21 +12,21 @@
         "Szechuan": 4
     },
     {
-        "Chicken Bubbly": 2,
+        "CHiKN": 1,
+        "Chicken Bubbly": 1,
         "Mt. Everest": 3,
-        "Oishii": 3,
+        "Oishii": 4,
         "Pamela's": 2,
         "Pie Express": 3,
         "Roots Natural Kitchen": 5,
         "Stack'd": 3,
-        "Sushi Fuku": 1,
         "Szechuan": 4
     },
     {
-        "Chicken Bubbly": 2,
+        "CHiKN": 1,
         "Mt. Everest": 3,
         "Oishii": 4,
-        "Pamela's": 2,
+        "Pamela's": 3,
         "Pie Express": 3,
         "Roots Natural Kitchen": 5,
         "Stack'd": 3,
@@ -42,23 +42,23 @@
         "Szechuan": 4
     },
     {
-        "Mt. Everest": 4,
-        "Oishii": 5,
+        "Oishii": 6,
+        "Pamela's": 3,
         "Pie Express": 4,
-        "Roots Natural Kitchen": 5,
-        "Stack'd": 4,
+        "Roots Natural Kitchen": 6,
+        "Stack'd": 3,
         "Szechuan": 4
     },
     {
-        "Mt. Everest": 5,
         "Oishii": 6,
+        "Pamela's": 5,
         "Pie Express": 5,
         "Roots Natural Kitchen": 6,
         "Szechuan": 4
     },
     {
-        "Mt. Everest": 5,
         "Oishii": 7,
+        "Pamela's": 5,
         "Pie Express": 7,
         "Roots Natural Kitchen": 6
     },

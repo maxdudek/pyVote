@@ -130,10 +130,10 @@ def getCandidates(ballots):
 
     return list(candidates)
 
-def calculateScores(candidates, ballots):
+def calculateBordaScores(candidates, ballots):
     """
     Assign each candidate a score based on their ranks in ballots
-    (Used for tiebreaking, maybe for other voting systems later)
+    (Used for tiebreaking in IRV, and also for the Borda system)
     Each vote for a candidate will add (n - r) to their score,
     where r is the rank (1st, 2nd, 3rd...) and n is the number of candidates - 
     this number is the number of candidates that the given candidate ranked ABOVE
@@ -153,6 +153,7 @@ def calculateScores(candidates, ballots):
     
     for ballot in ballots:
         for i in range(0, len(ballot)):
+            candidate = ballot[i]
             r = i+1
             scores[candidate] += (n - r)
 
@@ -211,7 +212,7 @@ def readBallots(filename):
 
     ballots = []
 
-    print("Ballots found: " + str(len(rawCsv) - 1))
+    # print("Ballots found: " + str(len(rawCsv) - 1))
 
     # Validate ballots and remove empty space
     for row in rawCsv[1:]:
@@ -221,7 +222,7 @@ def readBallots(filename):
         # else:
         #     print("Voided ballot: " + str(ballot))
 
-    print("Valid ballots: " + str(len(ballots)))
+    # print("Valid ballots: " + str(len(ballots)))
     
     return ballots
 
@@ -257,7 +258,7 @@ def irv(ballots):
     """
 
     candidates = getCandidates(ballots)
-    scores = calculateScores(candidates, ballots)
+    scores = calculateBordaScores(candidates, ballots)
     rounds = []
 
     # for b in ballots:
@@ -293,7 +294,7 @@ def irv(ballots):
 
 def bordaCount(ballots):
     candidates = getCandidates(ballots)
-    return [calculateScores(candidates, ballots)]
+    return [calculateBordaScores(candidates, ballots)]
 
 def twoRound(ballots):
     """
@@ -301,7 +302,7 @@ def twoRound(ballots):
 
     """
     candidates = getCandidates(ballots)
-    scores = calculateScores(candidates, ballots)
+    scores = calculateBordaScores(candidates, ballots)
     rounds = []
 
     # for b in ballots:
@@ -315,58 +316,94 @@ def twoRound(ballots):
         del firstRound[zeroCandidate]
         candidates.remove(zeroCandidate)
 
-    rounds.append(firstRound)
+    # Append a copy so that the first round can be modified
+    rounds.append(firstRound.copy())
 
-    # If there's no winner in the first round, eliminate all but the top two candidates
-    if(not roundHasWinner(firstRound)):
-        
-
+    # If theres a winner in the first round, we're done
+    if(roundHasWinner(firstRound)):
+        return rounds
+    
+    # Otherwise, eliminate all but the top two candidates
+    while(len(candidates) > 2):
         # Eliminate a candidate
-        loser = chooseLoser(currentRound, scores)
+        loser = chooseLoser(firstRound, scores)
         ballots = removeCandidate(loser, ballots)
         candidates.remove(loser)
+        del firstRound[loser]
 
-        # Run the next round
-        currentRound = getRound(candidates, ballots)
-        rounds.append(currentRound)
+    # Run the next round
+    secondRound = getRound(candidates, ballots)
+    rounds.append(secondRound)
 
     return rounds
 
-def csvToJson(filename):
+def csvToJson(filename, votingSystem):
+
+    # Allow the user to specify 'all'
+    if (votingSystem == "all"):
+        for vs in voteSwitch:
+            csvToJson(filename, vs)
+        return
+
     csvFile = filename
-    jsonOutput = csvFile.split(".")[0] + ".json"
+    jsonOutput = csvFile.split(".")[0] + "_"  + votingSystem + ".json"
     ballots = readBallots(csvFile)
-    rounds = irv(ballots)
+    rounds = voteSwitch[votingSystem](ballots)
     writeJson(rounds, jsonOutput, indent=4, sort_keys=True)
 
-def promptFilename():
+def promptFilename(votingSystem):
     filename =  filedialog.askopenfilename(initialdir="/", title="Select File",
                                            filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
 
-    csvToJson(filename)
+    csvToJson(filename, votingSystem)
 
-    
+voteSwitch = {
+    "Instant-Runoff": irv,
+    "Borda Count": bordaCount,
+    "Two-Round": twoRound,
+}
 
 def main():
+    
     root = tk.Tk()
 
-    openFile = tk.Button(root, text="Open File", padx=10, pady=5, 
-                         fg="white", bg="#263D42", command=promptFilename)
-    openFile.pack()
+    root.config(height=500, width=500)
+    root.title("KnowVote")
+
+    fileSelectPane = tk.Frame(root)
+    fileSelectPane.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+
+    # Label
+    dropdownLabel = tk.Label(fileSelectPane, text="Select voting system: ")
+    dropdownLabel.grid(row=0, column=0)
+
+    # Dropdown
+    votingOptions = list(voteSwitch.keys()) + ["all"]
+
+    votingSystemSelection = tk.StringVar(root)
+    votingSystemSelection.set(votingOptions[0])
+
+    votingSystemDropdown = tk.OptionMenu(fileSelectPane, votingSystemSelection, *votingOptions)
+    votingSystemDropdown.grid(row=0, column=1)
+
+    # Open file button
+    openFile = tk.Button(fileSelectPane, text="Open File", padx=10, pady=5, 
+                         fg="white", bg="#263D42", command=lambda: promptFilename(votingSystemSelection.get()))
+    openFile.grid(row=0, column=2)
 
     root.mainloop()
 
 if (__name__ == "__main__"):
     main()
 
-    # data = {
+    # round = {
     #     "Trump": 60,
     #     "Clinton": 58,
     #     "Jeb": 100,
     # }
 
-    # sortedList = sorted(data.keys(), key=lambda x: data[x], reverse=True)
-    # sortedData = [data[candidate] for candidate in sortedList]
+    # sortedCandidates = sorted(round.keys(), key=lambda x: round[x], reverse=False)
+    # sortedCounts = [round[candidate] for candidate in sortedCandidates]
 
     # print(sortedData)
 
