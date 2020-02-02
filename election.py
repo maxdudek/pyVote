@@ -29,6 +29,8 @@ their vote count for that round
 
 def lighten_color(color, amount=0.5):
     """
+    source: https://stackoverflow.com/questions/37765197/darken-or-lighten-a-color-in-matplotlib
+
     Lightens the given color by multiplying (1-luminosity) by the given amount.
     Input can be matplotlib color string, hex string, or RGB tuple.
 
@@ -53,6 +55,9 @@ def color_distance(c1,c2):
     return sum([abs(x[0]-x[1]) for x in zip(c1,c2)])
 
 def generate_new_color(existing_colors,pastel_factor = 0.5):
+    """
+    source: https://gist.github.com/adewes/5884820
+    """
     max_distance = None
     best_color = None
     for i in range(0,100):
@@ -66,6 +71,9 @@ def generate_new_color(existing_colors,pastel_factor = 0.5):
     return best_color
 
 def getColorList(n):
+    """
+    Get a list of different colors of length n
+    """
     colors = []
 
     for i in range(0,n):
@@ -340,17 +348,11 @@ def readBallots(filename):
 
     ballots = []
 
-    # print("Ballots found: " + str(len(rawCsv) - 1))
-
     # Validate ballots and remove empty space
     for row in rawCsv[1:]:
         ballot = row[1:]
         if validateBallot(ballot):
             ballots.append([candidate for candidate in ballot if candidate != ""])
-        # else:
-        #     print("Voided ballot: " + str(ballot))
-
-    # print("Valid ballots: " + str(len(ballots)))
     
     return ballots
 
@@ -389,9 +391,6 @@ def irv(ballots):
     scores = calculateBordaScores(candidates, ballots)
     rounds = []
 
-    # for b in ballots:
-    #     print(b)
-
     currentRound = getRound(candidates, ballots)
     # For the first round: eliminate candidates with 0 votes initially
     zeroCandidates = [c for c in candidates if currentRound[c] == 0]
@@ -404,11 +403,6 @@ def irv(ballots):
 
     # As long as the most recent round doesn't have a winner, keep looping
     while(not roundHasWinner(currentRound)):
-        # print("--------------- ROUND --------------")
-        # for b in ballots:
-        #     print(b)
-        # print(currentRound)
-
         # Eliminate a candidate
         loser = chooseLoser(currentRound, scores)
         ballots = removeCandidate(loser, ballots)
@@ -441,9 +435,6 @@ def twoRound(ballots):
     scores = calculateBordaScores(candidates, ballots)
     rounds = []
 
-    # for b in ballots:
-    #     print(b)
-
     firstRound = getRound(candidates, ballots)
     # For the first round: eliminate candidates with 0 votes initially
     zeroCandidates = [c for c in candidates if firstRound[c] == 0]
@@ -474,14 +465,27 @@ def twoRound(ballots):
     return (rounds, scores)
 
 def ballotsToPdf(ballots, votingSystem, pdfOutput, colors=None):
+    """
+    Given ballots, a voting system, and possibly colors, output 
+    election results to a pdf
+    """
     rounds, scores = voteSwitch[votingSystem](ballots)
     roundsToPdf(rounds, pdfOutput, scores, votingSystem, colors=colors)
 
 def getPdfOutputName(csvFile, votingSystem):
+    """
+    Convert CSV filename to pdf output filename
+    """
     # Remove all spaces from filename so that the os can open it
     return (csvFile.split(".")[0] + "_"  + votingSystem + ".pdf").replace(" ", "_")
 
 def promptFilename(votingSystem):
+    """
+    Prompt the user for a csv file and convert the results to a PDF
+
+    Parameters:
+    votingSystem (string) - "Instant-Runoff", "Borda Count", "Two-Round", or "All"
+    """
     csvFile = filedialog.askopenfilename(initialdir=str(Path.home()), title="Select File",
                                          filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
 
@@ -540,19 +544,5 @@ def main():
 
     root.mainloop()
 
-
 if (__name__ == "__main__"):
     main()
-    input('Press Enter to Continue...')
-
-    # round = {
-    #     "Trump": 60,
-    #     "Clinton": 58,
-    #     "Jeb": 100,
-    # }
-
-    # sortedCandidates = sorted(round.keys(), key=lambda x: round[x], reverse=False)
-    # sortedCounts = [round[candidate] for candidate in sortedCandidates]
-
-    # print(sortedData)
-
